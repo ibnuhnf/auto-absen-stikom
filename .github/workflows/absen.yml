@@ -1,14 +1,30 @@
-name: Auto Absen STIKOM - Jadwal Terbaru
+name: Auto Absen STIKOM - Jadwal + Re-run 5 Jam Kemudian
 
 on:
   schedule:
-    - cron: '55 0 * * 2'   # Selasa 07:55 WIB - APSI
-    - cron: '25 3 * * 2'   # Selasa 10:25 WIB - Metode Numerik
-    - cron: '55 5 * * 2'   # Selasa 12:55 WIB - Microcontroller
-    - cron: '55 0 * * 3'   # Rabu 07:55 WIB - Jaringan Komputer
-    - cron: '55 5 * * 3'   # Rabu 12:55 WIB - Sistem Operasi
-    - cron: '25 3 * * 6'   # Sabtu 10:25 WIB - Pemrograman Web
-    - cron: '55 5 * * 6'   # Sabtu 12:55 WIB - Kecerdasan Buatan
+    # === SELASA ===
+    - cron: '55 0 * * 2'   # 07:55 WIB - APSI (run pertama)
+    - cron: '55 5 * * 2'   # 12:55 WIB - APSI (run ulang +5 jam)
+
+    - cron: '25 3 * * 2'   # 10:25 WIB - Metode Numerik (run pertama)
+    - cron: '25 8 * * 2'   # 15:25 WIB - Metode Numerik (run ulang +5 jam)
+
+    - cron: '55 5 * * 2'   # 12:55 WIB - Microcontroller (run pertama)
+    - cron: '55 10 * * 2'  # 17:55 WIB - Microcontroller (run ulang +5 jam)
+
+    # === RABU ===
+    - cron: '55 0 * * 3'   # 07:55 WIB - Jaringan Komputer (run pertama)
+    - cron: '55 5 * * 3'   # 12:55 WIB - Jaringan Komputer (run ulang +5 jam)
+
+    - cron: '55 5 * * 3'   # 12:55 WIB - Sistem Operasi (run pertama)
+    - cron: '55 10 * * 3'  # 17:55 WIB - Sistem Operasi (run ulang +5 jam)
+
+    # === SABTU ===
+    - cron: '25 3 * * 6'   # 10:25 WIB - Pemrograman Web (run pertama)
+    - cron: '25 8 * * 6'   # 15:25 WIB - Pemrograman Web (run ulang +5 jam)
+
+    - cron: '55 5 * * 6'   # 12:55 WIB - Kecerdasan Buatan (run pertama)
+    - cron: '55 10 * * 6'  # 17:55 WIB - Kecerdasan Buatan (run ulang +5 jam)
 
   workflow_dispatch:
     inputs:
@@ -34,17 +50,18 @@ jobs:
           sudo apt-get install -y chromium-browser chromium-chromedriver
           pip install selenium webdriver-manager requests
       
-      - name: Tentukan Nama Mata Kuliah Otomatis
+      - name: Tentukan Nama Mata Kuliah
         id: class
         run: |
-          case "${{ github.event.schedule }}" in
-            "55 0 * * 2") CLASS="APSI (Analisa&Perancangan Sistem)" ;;
-            "25 3 * * 2") CLASS="Metode Numerik" ;;
-            "55 5 * * 2") CLASS="Microcontroller" ;;
-            "55 0 * * 3") CLASS="Jaringan Komputer" ;;
-            "55 5 * * 3") CLASS="Sistem Operasi" ;;
-            "25 3 * * 6") CLASS="Pemrograman Web" ;;
-            "55 5 * * 6") CLASS="Kecerdasan Buatan" ;;
+          SCHEDULE="${{ github.event.schedule }}"
+          case "$SCHEDULE" in
+            "55 0 * * 2"|"55 5 * * 2") CLASS="APSI (Analisa&Perancangan Sistem)" ;;
+            "25 3 * * 2"|"25 8 * * 2") CLASS="Metode Numerik" ;;
+            "55 5 * * 2"|"55 10 * * 2") CLASS="Microcontroller" ;;
+            "55 0 * * 3"|"55 5 * * 3") CLASS="Jaringan Komputer" ;;
+            "55 5 * * 3"|"55 10 * * 3") CLASS="Sistem Operasi" ;;
+            "25 3 * * 6"|"25 8 * * 6") CLASS="Pemrograman Web" ;;
+            "55 5 * * 6"|"55 10 * * 6") CLASS="Kecerdasan Buatan" ;;
             *) CLASS="${{ inputs.class_name }}" ;;
           esac
           echo "CLASS=$CLASS" >> $GITHUB_OUTPUT
