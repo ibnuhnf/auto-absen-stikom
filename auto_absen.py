@@ -10,7 +10,7 @@ import time, requests, sys
 USERNAME = "14524301"
 PASSWORD = "1"
 LOKASI   = ""
-NTFY_TOPIC = "absenstikom14524301"   # GANTI dengan topic ntfy kamu
+NTFY_TOPIC = "absenstikom14524301"   # topic kamu
 
 CLASS_NAME = sys.argv[1] if len(sys.argv) > 1 else "Metode Numerik"
 
@@ -40,19 +40,49 @@ def lakukan_login():
 try:
     lakukan_login()
     lakukan_login()
+    
     driver.get("https://siakad.stikompoltekcirebon.ac.id/dashboard.php?module=home")
     time.sleep(8)
     
-    absen_btn = WebDriverWait(driver, 15).until(EC.element_to_be_clickable((By.LINK_TEXT, "ABSEN")))
+    # Cari dan klik ABSEN untuk kelas spesifik
+    absen_xpath = f"//div[contains(., '{CLASS_NAME}')]//a[text()='ABSEN']"
+    absen_btn = WebDriverWait(driver, 15).until(EC.element_to_be_clickable((By.XPATH, absen_xpath)))
     driver.execute_script("arguments[0].scrollIntoView(true);", absen_btn)
     time.sleep(1)
     absen_btn.click()
     
-    pesan = f"✅ Absen {CLASS_NAME} BERHASIL pukul {time.strftime('%H:%M')}"
+    # Verifikasi sukses setelah klik (tunggu 5 detik, refresh, cek perubahan)
+    time.sleep(5)
+    driver.refresh()
+    time.sleep(5)
+    
+    # Cek indikator sukses (contoh: cari teks "Hadir", "Sudah Absen", atau tombol hilang)
+    success_indicators = [
+        EC.presence_of_element_located((By.XPATH, "//*[contains(text(), 'Hadir')]")),
+        EC.presence_of_element_located((By.XPATH, "//*[contains(text(), 'Sudah Absen')]")),
+        EC.invisibility_of_element_located((By.XPATH, absen_xpath))  # tombol hilang setelah sukses
+    ]
+    
+    is_success = False
+    for indicator in success_indicators:
+        try:
+            WebDriverWait(driver, 10).until(indicator)
+            is_success = True
+            break
+        except:
+            pass
+    
+    jam = time.strftime("%H:%M")
+    if is_success:
+        pesan = f"✅ Absen {CLASS_NAME} BERHASIL pukul {jam} (terverifikasi)"
+    else:
+        pesan = f"⚠️ Absen {CLASS_NAME} DIKLIK tapi BELUM TERCATAT pukul {jam} (dosen belum aktifkan?)"
+    
     kirim_notifikasi(pesan)
     print(pesan)
+
 except Exception as e:
-    pesan = f"❌ Absen {CLASS_NAME} GAGAL pukul {time.strftime('%H:%M')}"
+    pesan = f"❌ Absen {CLASS_NAME} GAGAL pukul {time.strftime('%H:%M')} - Error: {str(e)[:100]}"
     kirim_notifikasi(pesan)
 finally:
     driver.quit()
