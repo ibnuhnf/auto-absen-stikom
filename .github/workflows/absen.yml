@@ -9,7 +9,13 @@ on:
     - cron: '55 5 * * 3'   # Rabu 12:55 WIB → Sistem Operasi
     - cron: '25 3 * * 6'   # Sabtu 10:25 WIB → Pemrograman Web
     - cron: '55 5 * * 6'   # Sabtu 12:55 WIB → Kecerdasan Buatan
-  workflow_dispatch:   # Bisa dijalankan manual kapan saja
+
+  workflow_dispatch:        # Untuk test manual
+    inputs:
+      class_name:
+        description: 'Nama Mata Kuliah (contoh: Metode Numerik)'
+        required: true
+        default: 'Metode Numerik'
 
 jobs:
   absen:
@@ -31,22 +37,4 @@ jobs:
       - name: Run Auto Absen
         env:
           NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
-        run: |
-          if [[ "${{ github.event.schedule }}" == "55 0 * * 2" ]]; then
-            CLASS="APSI (Analisa&Perancangan Sistem)"
-          elif [[ "${{ github.event.schedule }}" == "25 3 * * 2" ]]; then
-            CLASS="Metode Numerik"
-          elif [[ "${{ github.event.schedule }}" == "55 5 * * 2" ]]; then
-            CLASS="Microcontroller"
-          elif [[ "${{ github.event.schedule }}" == "55 0 * * 3" ]]; then
-            CLASS="Jaringan Komputer"
-          elif [[ "${{ github.event.schedule }}" == "55 5 * * 3" ]]; then
-            CLASS="Sistem Operasi"
-          elif [[ "${{ github.event.schedule }}" == "25 3 * * 6" ]]; then
-            CLASS="Pemrograman Web"
-          elif [[ "${{ github.event.schedule }}" == "55 5 * * 6" ]]; then
-            CLASS="Kecerdasan Buatan"
-          else
-            CLASS="Metode Numerik"
-          fi
-          python auto_absen.py "$CLASS"
+        run: python auto_absen.py "${{ inputs.class_name || 'Metode Numerik' }}"
