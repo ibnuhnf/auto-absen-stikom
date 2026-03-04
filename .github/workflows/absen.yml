@@ -2,18 +2,18 @@ name: Auto Absen STIKOM - Jadwal Terbaru
 
 on:
   schedule:
-    - cron: '55 0 * * 2'   # Selasa 07:55 WIB → APSI
-    - cron: '25 3 * * 2'   # Selasa 10:25 WIB → Metode Numerik
-    - cron: '55 5 * * 2'   # Selasa 12:55 WIB → Microcontroller
-    - cron: '55 0 * * 3'   # Rabu 07:55 WIB → Jaringan Komputer
-    - cron: '55 5 * * 3'   # Rabu 12:55 WIB → Sistem Operasi
-    - cron: '25 3 * * 6'   # Sabtu 10:25 WIB → Pemrograman Web
-    - cron: '55 5 * * 6'   # Sabtu 12:55 WIB → Kecerdasan Buatan
+    - cron: '55 0 * * 2'   # Selasa 07:55 WIB - APSI
+    - cron: '25 3 * * 2'   # Selasa 10:25 WIB - Metode Numerik
+    - cron: '55 5 * * 2'   # Selasa 12:55 WIB - Microcontroller
+    - cron: '55 0 * * 3'   # Rabu 07:55 WIB - Jaringan Komputer
+    - cron: '55 5 * * 3'   # Rabu 12:55 WIB - Sistem Operasi
+    - cron: '25 3 * * 6'   # Sabtu 10:25 WIB - Pemrograman Web
+    - cron: '55 5 * * 6'   # Sabtu 12:55 WIB - Kecerdasan Buatan
 
-  workflow_dispatch:        # Untuk test manual
+  workflow_dispatch:
     inputs:
       class_name:
-        description: 'Nama Mata Kuliah (contoh: Metode Numerik)'
+        description: 'Nama Mata Kuliah (untuk test manual)'
         required: true
         default: 'Metode Numerik'
 
@@ -34,7 +34,22 @@ jobs:
           sudo apt-get install -y chromium-browser chromium-chromedriver
           pip install selenium webdriver-manager requests
       
-      - name: Run Auto Absen
+      - name: Tentukan Nama Mata Kuliah Otomatis
+        id: class
+        run: |
+          case "${{ github.event.schedule }}" in
+            "55 0 * * 2") CLASS="APSI (Analisa&Perancangan Sistem)" ;;
+            "25 3 * * 2") CLASS="Metode Numerik" ;;
+            "55 5 * * 2") CLASS="Microcontroller" ;;
+            "55 0 * * 3") CLASS="Jaringan Komputer" ;;
+            "55 5 * * 3") CLASS="Sistem Operasi" ;;
+            "25 3 * * 6") CLASS="Pemrograman Web" ;;
+            "55 5 * * 6") CLASS="Kecerdasan Buatan" ;;
+            *) CLASS="${{ inputs.class_name }}" ;;
+          esac
+          echo "CLASS=$CLASS" >> $GITHUB_OUTPUT
+      
+      - name: Jalankan Auto Absen
         env:
           NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
-        run: python auto_absen.py "${{ inputs.class_name || 'Metode Numerik' }}"
+        run: python auto_absen.py "${{ steps.class.outputs.CLASS }}"
