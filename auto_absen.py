@@ -1,88 +1,26 @@
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.chrome.service import Service
-from webdriver_manager.chrome import ChromeDriverManager
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-import time, requests, sys
+# Ganti bagian ini
+service = Service(ChromeDriverManager().install())  # <-- ini sering gagal di Actions
 
-USERNAME = "14524301"
-PASSWORD = "1"
-LOKASI   = ""
-NTFY_TOPIC = "absenstikom14524301"   # topic kamu
+# Jadi seperti ini (pakai pre-installed chromedriver)
+from selenium.webdriver.chrome.service import Service as ChromeService
+import os
 
-CLASS_NAME = sys.argv[1] if len(sys.argv) > 1 else "Metode Numerik"
+# Path chromedriver di ubuntu-latest GitHub Actions (versi terbaru 2026 biasanya /usr/bin/chromedriver)
+chromedriver_path = "/usr/bin/chromedriver"  # atau "/usr/local/bin/chromedriver" kalau beda
 
-def kirim_notifikasi(pesan):
-    url = f"https://ntfy.sh/{NTFY_TOPIC}"
-    requests.post(url, data=pesan.encode('utf-8'), timeout=10)
+if not os.path.exists(chromedriver_path):
+    chromedriver_path = "/usr/local/bin/chromedriver"  # fallback
 
-options = Options()
+service = ChromeService(executable_path=chromedriver_path)
+
+# Opsi Chrome tambahan untuk Actions (penting!)
 options.add_argument("--headless=new")
-options.add_argument("--no-sandbox")
-options.add_argument("--disable-dev-shm-usage")
-options.add_argument("--disable-gpu")
+options.add_argument("--no-sandbox")              # WAJIB di Actions
+options.add_argument("--disable-dev-shm-usage")   # WAJIB, hindari crash memory
+options.add_argument("--disable-gpu")             # sering dibutuhkan
+options.add_argument("--remote-debugging-port=9222")
+options.add_argument("--disable-extensions")
+options.add_argument("--disable-infobars")
+options.add_argument("--window-size=1920,1080")   # hindari resize error
 
-service = Service(ChromeDriverManager().install())
 driver = webdriver.Chrome(service=service, options=options)
-
-def lakukan_login():
-    driver.get("https://siakad.stikompoltekcirebon.ac.id/index.php")
-    time.sleep(5)
-    wait = WebDriverWait(driver, 20)
-    inputs = wait.until(EC.presence_of_all_elements_located((By.TAG_NAME, "input")))
-    inputs[0].clear(); inputs[0].send_keys(USERNAME)
-    inputs[1].clear(); inputs[1].send_keys(PASSWORD)
-    wait.until(EC.element_to_be_clickable((By.XPATH, "//input[@type='submit' or @value='MASUK'] | //button[contains(text(),'MASUK')]"))).click()
-    time.sleep(7)
-
-try:
-    lakukan_login()
-    lakukan_login()
-    
-    driver.get("https://siakad.stikompoltekcirebon.ac.id/dashboard.php?module=home")
-    time.sleep(8)
-    
-    # Cari dan klik ABSEN untuk kelas spesifik
-    absen_xpath = f"//div[contains(., '{CLASS_NAME}')]//a[text()='ABSEN']"
-    absen_btn = WebDriverWait(driver, 15).until(EC.element_to_be_clickable((By.XPATH, absen_xpath)))
-    driver.execute_script("arguments[0].scrollIntoView(true);", absen_btn)
-    time.sleep(1)
-    absen_btn.click()
-    
-    # Verifikasi sukses setelah klik (tunggu 5 detik, refresh, cek perubahan)
-    time.sleep(5)
-    driver.refresh()
-    time.sleep(5)
-    
-    # Cek indikator sukses (contoh: cari teks "Hadir", "Sudah Absen", atau tombol hilang)
-    success_indicators = [
-        EC.presence_of_element_located((By.XPATH, "//*[contains(text(), 'Hadir')]")),
-        EC.presence_of_element_located((By.XPATH, "//*[contains(text(), 'Sudah Absen')]")),
-        EC.invisibility_of_element_located((By.XPATH, absen_xpath))  # tombol hilang setelah sukses
-    ]
-    
-    is_success = False
-    for indicator in success_indicators:
-        try:
-            WebDriverWait(driver, 10).until(indicator)
-            is_success = True
-            break
-        except:
-            pass
-    
-    jam = time.strftime("%H:%M")
-    if is_success:
-        pesan = f"✅ Absen {CLASS_NAME} BERHASIL pukul {jam} (terverifikasi)"
-    else:
-        pesan = f"⚠️ Absen {CLASS_NAME} DIKLIK tapi BELUM TERCATAT pukul {jam} (dosen belum aktifkan?)"
-    
-    kirim_notifikasi(pesan)
-    print(pesan)
-
-except Exception as e:
-    pesan = f"❌ Absen {CLASS_NAME} GAGAL pukul {time.strftime('%H:%M')} - Error: {str(e)[:100]}"
-    kirim_notifikasi(pesan)
-finally:
-    driver.quit()
