@@ -1,30 +1,34 @@
-name: Auto Absen STIKOM - Jadwal + Re-run 5 Jam Kemudian
+name: Auto Absen STIKOM - Jadwal Terbaru (2x per Matkul)
 
 on:
   schedule:
-    # === SELASA ===
-    - cron: '55 0 * * 2'   # 07:55 WIB - APSI (run pertama)
-    - cron: '55 5 * * 2'   # 12:55 WIB - APSI (run ulang +5 jam)
+    # Selasa - APSI (09:00 & 11:30 WIB)
+    - cron: '55 1 * * 2'   # 08:55 WIB (run pertama APSI)
+    - cron: '25 4 * * 2'   # 11:25 WIB (run kedua APSI)
 
-    - cron: '25 3 * * 2'   # 10:25 WIB - Metode Numerik (run pertama)
-    - cron: '25 8 * * 2'   # 15:25 WIB - Metode Numerik (run ulang +5 jam)
+    # Selasa - Metode Numerik (11:30 & 14:00 WIB)
+    - cron: '25 4 * * 2'   # 11:25 WIB (run pertama Metode Numerik)
+    - cron: '55 6 * * 2'   # 13:55 WIB (run kedua Metode Numerik)
 
-    - cron: '55 5 * * 2'   # 12:55 WIB - Microcontroller (run pertama)
-    - cron: '55 10 * * 2'  # 17:55 WIB - Microcontroller (run ulang +5 jam)
+    # Selasa - Microcontroller (14:00 & 16:30 WIB)
+    - cron: '55 6 * * 2'   # 13:55 WIB (run pertama Microcontroller)
+    - cron: '25 9 * * 2'   # 16:25 WIB (run kedua Microcontroller)
 
-    # === RABU ===
-    - cron: '55 0 * * 3'   # 07:55 WIB - Jaringan Komputer (run pertama)
-    - cron: '55 5 * * 3'   # 12:55 WIB - Jaringan Komputer (run ulang +5 jam)
+    # Rabu - Jaringan Komputer (09:00 & 11:30 WIB)
+    - cron: '55 1 * * 3'   # 08:55 WIB (run pertama)
+    - cron: '25 4 * * 3'   # 11:25 WIB (run kedua)
 
-    - cron: '55 5 * * 3'   # 12:55 WIB - Sistem Operasi (run pertama)
-    - cron: '55 10 * * 3'  # 17:55 WIB - Sistem Operasi (run ulang +5 jam)
+    # Rabu - Sistem Operasi (14:00 & 15:40 WIB)
+    - cron: '55 6 * * 3'   # 13:55 WIB (run pertama)
+    - cron: '35 8 * * 3'   # 15:35 WIB (run kedua)
 
-    # === SABTU ===
-    - cron: '25 3 * * 6'   # 10:25 WIB - Pemrograman Web (run pertama)
-    - cron: '25 8 * * 6'   # 15:25 WIB - Pemrograman Web (run ulang +5 jam)
+    # Sabtu - Pemrograman Web (11:30 & 14:00 WIB)
+    - cron: '25 4 * * 6'   # 11:25 WIB (run pertama)
+    - cron: '55 6 * * 6'   # 13:55 WIB (run kedua)
 
-    - cron: '55 5 * * 6'   # 12:55 WIB - Kecerdasan Buatan (run pertama)
-    - cron: '55 10 * * 6'  # 17:55 WIB - Kecerdasan Buatan (run ulang +5 jam)
+    # Sabtu - Kecerdasan Buatan (14:00 & 16:30 WIB)
+    - cron: '55 6 * * 6'   # 13:55 WIB (run pertama)
+    - cron: '25 9 * * 6'   # 16:25 WIB (run kedua)
 
   workflow_dispatch:
     inputs:
@@ -55,13 +59,13 @@ jobs:
         run: |
           SCHEDULE="${{ github.event.schedule }}"
           case "$SCHEDULE" in
-            "55 0 * * 2"|"55 5 * * 2") CLASS="APSI (Analisa&Perancangan Sistem)" ;;
-            "25 3 * * 2"|"25 8 * * 2") CLASS="Metode Numerik" ;;
-            "55 5 * * 2"|"55 10 * * 2") CLASS="Microcontroller" ;;
-            "55 0 * * 3"|"55 5 * * 3") CLASS="Jaringan Komputer" ;;
-            "55 5 * * 3"|"55 10 * * 3") CLASS="Sistem Operasi" ;;
-            "25 3 * * 6"|"25 8 * * 6") CLASS="Pemrograman Web" ;;
-            "55 5 * * 6"|"55 10 * * 6") CLASS="Kecerdasan Buatan" ;;
+            "55 1 * * 2"|"25 4 * * 2") CLASS="APSI (Analisa&Perancangan Sistem)" ;;
+            "25 4 * * 2"|"55 6 * * 2") CLASS="Metode Numerik" ;;
+            "55 6 * * 2"|"25 9 * * 2") CLASS="Microcontroller" ;;
+            "55 1 * * 3"|"25 4 * * 3") CLASS="Jaringan Komputer" ;;
+            "55 6 * * 3"|"35 8 * * 3") CLASS="Sistem Operasi" ;;
+            "25 4 * * 6"|"55 6 * * 6") CLASS="Pemrograman Web" ;;
+            "55 6 * * 6"|"25 9 * * 6") CLASS="Kecerdasan Buatan" ;;
             *) CLASS="${{ inputs.class_name }}" ;;
           esac
           echo "CLASS=$CLASS" >> $GITHUB_OUTPUT
